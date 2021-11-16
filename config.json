@@ -1,0 +1,11 @@
+{
+    "showRetentions": true,
+    "tagBoundary": 200,
+    "iterations": 300,
+    "colors.node": "#999999",
+    "colors.edge": "#555555",
+    "colors.background": "#333333",
+    "showUnlinkedNodes": true,
+    "mode": "viva",
+    "graphMode": "default"
+}
