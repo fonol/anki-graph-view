@@ -6,6 +6,6 @@
     "colors.edge": "#555555",
     "colors.background": "#333333",
     "showUnlinkedNodes": true,
-    "mode": "viva",
+    "mode": "cytoscape",
     "graphMode": "default"
 }
