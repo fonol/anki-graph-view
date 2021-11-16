@@ -211,8 +211,7 @@ import { onMount, tick } from "svelte";
 		<div class='setting-item'>
 			<div
 				class="label"
-				title="Create a linking between two notes if they share a tag who is less common than <value>.
-The higher this value, the more edges the graph will have, but the less meaningful they will probably be.
+				title="Only include tags that are less common than this value. 
 Valid values range from 50 to 1000 (default 200)."
 			>
 				Tag Boundary
