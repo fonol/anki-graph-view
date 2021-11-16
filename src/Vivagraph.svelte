@@ -462,6 +462,6 @@ import getGraphData from './data.js';
 		text-overflow: ellipsis;
 		max-width: 200px;
 		overflow: hidden;
-		font-family: Roboto Mono;
+        font-family: Verdana, "Roboto Mono";
 	}
 </style>

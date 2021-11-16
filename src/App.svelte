@@ -352,7 +352,7 @@ Valid inputs range from 50 to 1000 (default 300)."
 <style>
 	.outer {
 		color: lightgrey;
-		font-family: Roboto Mono;
+		font-family: Verdana, "Roboto Mono";
 		width: 100%;
 		height: 100%;
 		overflow: hidden;
