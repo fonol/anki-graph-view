@@ -55,7 +55,6 @@ class MainDialog(QDialog):
 
     def set_initial_html(self):
 
-        notes       = get_all_notes_with_tags()
         retentions  = get_retentions()
         config      = mw.addonManager.getConfig(__name__)
 
@@ -72,7 +71,6 @@ class MainDialog(QDialog):
                 <script src="{base_url}public/lib/cytoscape-fcose.js"></script>
                 <script src='{base_url}public/lib/vivagraph.js'></script>
                 <script type='text/javascript'>
-                    window.notes = {json.dumps(notes)};
                     window.retentions = {json.dumps(retentions)};
                     window.settings = {{
                         showRetentions: {str(config["showRetentions"]).lower()},
@@ -99,6 +97,8 @@ class MainDialog(QDialog):
 
         if cmd == "domDone":
 
+            notes = get_all_notes_with_tags()
+            self.js(f"window.notes = {json.dumps(notes)};")
             self.web._domDone = True
             self.web._maybeRunActions()
 

@@ -43,7 +43,19 @@ import { onMount, tick } from "svelte";
 	})();
 	// $: settings.mode && renderGraph();
 
-	onMount(renderGraph);
+	onMount(renderWhenReady);
+
+	function renderWhenReady() {
+		if (!window.notes || window.notes.length === 0) {
+			setTimeout(() => {
+				renderWhenReady();
+			}, 50);
+			return;
+		}
+		notes = window.notes;
+		renderGraph();
+
+	}
 
 	function tagBoundaryChange() {
 		if (tagBoundaryInp < 50 || tagBoundaryInp > 1000) {
@@ -386,6 +398,10 @@ Valid inputs range from 50 to 1000 (default 300)."
 	}
 	.button-icon.active {
 		color: #0094cd;
+	}
+	.button-icon svg {
+		height: 100%;
+		width: 100%;
 	}
 	.label {
 		user-select: none;
