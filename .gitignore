@@ -1,3 +1,4 @@
 node_modules/*
 meta.json
 package-lock.json
+__pycache__/*
