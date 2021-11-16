@@ -98,6 +98,16 @@ export default function getGraphData(notes, retentions, settings) {
                 group: "nodes",
             };
             nodes.push(tnode);
+                let c = 0;
+                let sum = 0.0;
+            for (let nid of els) {
+                if (nid in retentions) {
+                    c++;
+                    sum += retentions[nid];
+                }
+            }
+            tnode.data['ret'] = c > 0 ? (sum / c) : null;
+
             for (let [tag1, els1] of Object.entries(byTag)) {
                 if (tag1 === tag) {
                     continue;
