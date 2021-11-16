@@ -366,6 +366,7 @@ Valid inputs range from 50 to 1000 (default 300)."
 		flex: 1 1 auto;
 		display: flex;
 		flex-direction: row;
+		height: 100%;
 	}
 
 	#controls {
@@ -431,7 +432,7 @@ Valid inputs range from 50 to 1000 (default 300)."
 		font-size: 10px;
 		margin-bottom: 4px;
 	}
-	select {
+	:global(select) {
 		background: #2b2b2b;
 		height: 28px;
 		color: lightgrey;
