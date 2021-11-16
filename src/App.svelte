@@ -1,5 +1,5 @@
 <script>
-import { onMount, tick } from "svelte";
+	import { onMount, tick } from "svelte";
 
 	import Vivagraph from "./Vivagraph.svelte";
 	import Cytoscape from "./Cytoscape.svelte";
@@ -14,6 +14,9 @@ import { onMount, tick } from "svelte";
 	let tagBoundaryInp = settings.tagBoundary;
 	let iterInp = settings.iterations;
 
+	let webGLAvailable = webglSupport();
+
+
 	$: note = infoNid ? notes.find((n) => n[0] === infoNid) : null;
 	$: noteTags = note ? note[1] : [];
 	$: noteFields = note ? note[2].filter((f) => f && f.trim().length) : [];
@@ -23,24 +26,37 @@ import { onMount, tick } from "svelte";
 
 	$: tagBoundaryInp && tagBoundaryChange();
 	$: iterInp && iterationChange();
-	$: settings.defaultNodeColor && (() => { if (typeof(pycmd) !== 'undefined') pycmd('config-default-node-color '  + settings.defaultNodeColor)})();
-	$: settings.edgeColor && (() => { if (typeof(pycmd) !== 'undefined') pycmd('config-edge-color '  + settings.edgeColor)})();
-	$: settings.backgroundColor && (() => { if (typeof(pycmd) !== 'undefined') pycmd('config-background-color '  + settings.backgroundColor)})();
-	$: settings.mode && (() => { 
-		if (prevMode === settings.mode) 
-			return;
-		prevMode = settings.mode;
-		if (typeof(pycmd) !== 'undefined') pycmd('config-mode '  + settings.mode); 
-		renderGraph();
-	})();
-	$: settings.graphMode && (() => { 
-		if (prevGraphMode === settings.graphMode) 
-			return;
-		prevGraphMode = settings.graphMode;
-		if (typeof(pycmd) !== 'undefined') 
-			pycmd('config-graph-mode '  + settings.graphMode); 
-		renderGraph();
-	})();
+	$: settings.defaultNodeColor &&
+		(() => {
+			if (typeof pycmd !== "undefined")
+				pycmd("config-default-node-color " + settings.defaultNodeColor);
+		})();
+	$: settings.edgeColor &&
+		(() => {
+			if (typeof pycmd !== "undefined")
+				pycmd("config-edge-color " + settings.edgeColor);
+		})();
+	$: settings.backgroundColor &&
+		(() => {
+			if (typeof pycmd !== "undefined")
+				pycmd("config-background-color " + settings.backgroundColor);
+		})();
+	$: settings.mode &&
+		(() => {
+			if (prevMode === settings.mode) return;
+			prevMode = settings.mode;
+			if (typeof pycmd !== "undefined")
+				pycmd("config-mode " + settings.mode);
+			renderGraph();
+		})();
+	$: settings.graphMode &&
+		(() => {
+			if (prevGraphMode === settings.graphMode) return;
+			prevGraphMode = settings.graphMode;
+			if (typeof pycmd !== "undefined")
+				pycmd("config-graph-mode " + settings.graphMode);
+			renderGraph();
+		})();
 	// $: settings.mode && renderGraph();
 
 	onMount(renderWhenReady);
@@ -54,14 +70,13 @@ import { onMount, tick } from "svelte";
 		}
 		notes = window.notes;
 		renderGraph();
-
 	}
 
 	function tagBoundaryChange() {
 		if (tagBoundaryInp < 50 || tagBoundaryInp > 1000) {
 			return;
 		}
-		if (typeof(window.pycmd) === 'undefined') {
+		if (typeof window.pycmd === "undefined") {
 			return;
 		}
 		window.pycmd("config-tag-boundary " + tagBoundaryInp);
@@ -71,14 +86,23 @@ import { onMount, tick } from "svelte";
 		if (iterInp < 50 || iterInp > 1000) {
 			return;
 		}
-		if (typeof(window.pycmd) === 'undefined') {
+		if (typeof window.pycmd === "undefined") {
 			return;
 		}
 		window.pycmd("config-iterations " + iterInp);
 		settings.iterations = iterInp;
 	}
-
-
+	function webglSupport() {
+		try {
+			var canvas = document.createElement("canvas");
+			return Boolean(
+				!!window.WebGLRenderingContext &&
+				(canvas.getContext("webgl") || canvas.getContext("experimental-webgl"))
+			);
+		} catch (e) {
+			return false;
+		}
+	}
 
 	function toggleShowRetentions() {
 		settings.showRetentions = !settings.showRetentions;
@@ -90,7 +114,10 @@ import { onMount, tick } from "svelte";
 	}
 	function toggleShowUnlinkedNodes() {
 		settings.showUnlinkedNodes = !settings.showUnlinkedNodes;
-		window.pycmd("config-show-unlinked " + settings.showUnlinkedNodes.toString().toLowerCase());
+		window.pycmd(
+			"config-show-unlinked " +
+				settings.showUnlinkedNodes.toString().toLowerCase()
+		);
 	}
 
 	async function renderGraph() {
@@ -105,8 +132,8 @@ import { onMount, tick } from "svelte";
 	<div id="controls">
 		<div style="margin-right: 10px">
 			<select bind:value={settings.mode}>
-				<option value="viva">Viva</option>
 				<option value="cytoscape">Cytoscape</option>
+				<option value="viva" disabled="{!webGLAvailable}">Viva</option>
 			</select>
 		</div>
 		<div style="margin-right: 10px">
@@ -210,17 +237,31 @@ import { onMount, tick } from "svelte";
 				/></svg
 			>
 		</div>
-		{#if settings.mode !== 'cytoscape'}
-		<div
-			class="button button-icon"
-			title="Toggle Show Unlinked Nodes"
-			on:click={toggleShowUnlinkedNodes}
-			class:active={settings.showUnlinkedNodes}
-		>	
-<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512"><circle cx="256" cy="256" r="192" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32"/></svg>
-	</div>
+		{#if settings.mode !== "cytoscape"}
+			<div
+				class="button button-icon"
+				title="Toggle Show Unlinked Nodes"
+				on:click={toggleShowUnlinkedNodes}
+				class:active={settings.showUnlinkedNodes}
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="ionicon"
+					viewBox="0 0 512 512"
+					><circle
+						cx="256"
+						cy="256"
+						r="192"
+						fill="none"
+						stroke="currentColor"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="32"
+					/></svg
+				>
+			</div>
 		{/if}
-		<div class='setting-item'>
+		<div class="setting-item">
 			<div
 				class="label"
 				title="Only include tags that are less common than this value. 
@@ -231,85 +272,67 @@ Valid values range from 50 to 1000 (default 200)."
 			<input
 				type="number"
 				bind:value={tagBoundaryInp}
-				on:blur={() => { tagBoundaryInp = Math.max(50, Math.min(1000, tagBoundaryInp))}}
+				on:blur={() => {
+					tagBoundaryInp = Math.max(
+						50,
+						Math.min(1000, tagBoundaryInp)
+					);
+				}}
 				min="50"
 				max="1000"
 			/>
 		</div>
-		{#if settings.mode === 'viva'}
-		<div class='setting-item'>
-			<div
-				class="label"
-				title="How many steps the layouting algorithm should perform until the graph freezes. 
+		{#if settings.mode === "viva"}
+			<div class="setting-item">
+				<div
+					class="label"
+					title="How many steps the layouting algorithm should perform until the graph freezes. 
 Valid inputs range from 50 to 1000 (default 300)."
-			>
-				Layouting Iterations
+				>
+					Layouting Iterations
+				</div>
+				<input
+					type="number"
+					bind:value={iterInp}
+					on:blur={() => {
+						iterInp = Math.max(50, Math.min(1000, iterInp));
+					}}
+					min="50"
+					max="1000"
+				/>
 			</div>
-			<input
-				type="number"
-				bind:value={iterInp}
-				on:blur={() => { iterInp = Math.max(50, Math.min(1000, iterInp))}}
-				min="50"
-				max="1000"
-			/>
-		</div>
 		{/if}
-		<div class='setting-item' >
-			<div
-				class="label"
-				title="Default = #999999"
-			>
-				Default Node
-			</div>
-			<input
-				type="color"
-				bind:value={settings.defaultNodeColor}
-			/>
+		<div class="setting-item">
+			<div class="label" title="Default = #999999">Default Node</div>
+			<input type="color" bind:value={settings.defaultNodeColor} />
 		</div>
-		<div class='setting-item'>
-			<div
-				class="label"
-				title="Default = #555555"
-			>
-				Edge
-			</div>
-			<input
-				type="color"
-				bind:value={settings.edgeColor}
-			/>
+		<div class="setting-item">
+			<div class="label" title="Default = #555555">Edge</div>
+			<input type="color" bind:value={settings.edgeColor} />
 		</div>
-		<div class='setting-item'>
-			<div
-				class="label"
-				title="Default = #333333"
-			>
-				Background
-			</div>
-			<input
-				type="color"
-				bind:value={settings.backgroundColor}
-			/>
+		<div class="setting-item">
+			<div class="label" title="Default = #333333">Background</div>
+			<input type="color" bind:value={settings.backgroundColor} />
 		</div>
 	</div>
 
 	<div id="graph-wrapper">
-		{#if settings.mode === 'viva'}
-		<Vivagraph
-			bind:this={graph}
-			bind:infoNid
-			{retentions}
-			{notes}
-			{settings}
-		/>
+		{#if settings.mode === "viva"}
+			<Vivagraph
+				bind:this={graph}
+				bind:infoNid
+				{retentions}
+				{notes}
+				{settings}
+			/>
 		{:else}
-		<Cytoscape
-			bind:this={graph}
-			bind:infoNid
-			{retentions}
-			{notes}
-			{settings}
-		/>
-
+			<Cytoscape
+				bind:this={graph}
+				bind:infoNid
+				{retentions}
+				{notes}
+				{settings}
+			/>
 		{/if}
 		<div id="info">
 			<div id="info-tags">
@@ -429,10 +452,9 @@ Valid inputs range from 50 to 1000 (default 300)."
 		box-shadow: 0 0 10px #313131;
 	}
 	.setting-item {
-		margin-left: 10px; 
-		display: flex; 
-		flex-direction: column; 
+		margin-left: 10px;
+		display: flex;
+		flex-direction: column;
 		align-items: center;
 	}
-
 </style>
