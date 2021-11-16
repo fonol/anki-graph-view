@@ -1,5 +1,5 @@
 <script>
-    import { onMount, tick } from "svelte";
+    import { onMount, onDestroy, tick } from "svelte";
 
     import getGraphData from "./data.js";
 
@@ -23,6 +23,16 @@
         //     window.lastMouseMove = [e.pageX, e.pageY];
         // };
     });
+    onDestroy(function () {
+        window.removeEventListener("resize", onResize);
+    });
+
+    function onResize() {
+        if (cy !== null) {
+            cy.center();
+        }
+    }
+
     function renderTooltip(event) {
         let node = event.target;
         if (!node.isNode()) {
@@ -100,16 +110,20 @@
             <div style='font-size: 20px'>Lib: ${settings.mode}</div>
             <div style='font-size: 20px'>Mode: ${settings.graphMode}</div>
             `;
-            await tick();
+        await tick();
         setTimeout(function () {
             console.log("renderGraph()");
-            let container = document.getElementById('cytoscape-container');
+            let container = document.getElementById("cytoscape-container");
             container.innerHTML = "";
 
             let pBuildNodes = performance.now();
             let settingsCopy = JSON.parse(JSON.stringify(settings));
             settingsCopy.showUnlinkedNodes = false;
-            let { nodes, edges } = getGraphData(notes, retentions, settingsCopy);
+            let { nodes, edges } = getGraphData(
+                notes,
+                retentions,
+                settingsCopy
+            );
 
             console.log(
                 "Built " + nodes.length + " nodes, " + edges.length + " edges."
@@ -131,20 +145,16 @@
                     nodes: nodes,
                     edges: edges,
                 },
-                // elements:
-                // {
-                //   nodes: [ {group: 'nodes', data: {id: 'n1'}},{ group: 'nodes', data: {id: 'n2'}}, { group: 'nodes', data: {id: 'n3'}}],
-                //   edges: [ { group: 'edges', data: { id: 'e1', source: 'n2', target: 'n3'}}]
-                // },
 
                 style: [
-                    // the stylesheet for the graph
                     {
                         selector: "node",
                         style: {
                             // 'background-color': '#666',
-                            height: (n) => n.data('id').startsWith('t_') ? 12 : 7,
-                            width: (n) => n.data('id').startsWith('t_') ? 12 : 7,
+                            height: (n) =>
+                                n.data("id").startsWith("t_") ? 12 : 7,
+                            width: (n) =>
+                                n.data("id").startsWith("t_") ? 12 : 7,
                             "background-color": (n) => {
                                 return n.data("ret")
                                     ? retColor(Number(n.data("ret")))
@@ -159,7 +169,7 @@
                         style: {
                             width: "2px",
 
-                            'line-color': settings.edgeColor,
+                            "line-color": settings.edgeColor,
                             // 'target-arrow-color': '#ccc',
                             // 'target-arrow-shape': 'triangle',
                             // 'curve-style': 'bezier'
@@ -274,22 +284,16 @@
                     stop: () => {}, // on layoutstop
                 },
             });
-            // cy.on("click", "node", function (evt) {
-            //     let id = this.id();
-            //     let nid = id.substring(2);
-            //     window.displayNoteInfo(nid);
-            // });
 
             cy.elements().unbind("mouseover");
             cy.elements().bind("mouseover", (event) => renderTooltip(event));
 
             cy.elements().unbind("mouseout");
             cy.elements().bind("mouseout", (event) => hideTooltip(event));
-            window.addEventListener("resize", function (event) {
-                cy.center();
-            });
+            window.addEventListener("resize", onResize);
             loader.show = false;
             rendering = false;
+            window.cy = cy;
         }, 30);
     }
 </script>
