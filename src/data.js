@@ -112,7 +112,7 @@ export default function getGraphData(notes, retentions, settings) {
         // create edges between notes with explicit linkings
         let explicitLinkingsCounter = 0;
         for (let [nid, reffedNid] of Object.entries(refs)) {
-            if (allNids.has(reffedNid)) {
+            if (allNids.has(reffedNid) && nid !== reffedNid) {
                 explicitLinkingsCounter++;
                 idC++;
                 edges.push({
