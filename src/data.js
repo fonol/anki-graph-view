@@ -26,20 +26,30 @@ export default function getGraphData(notes, retentions, settings) {
     let refs = {};
 
     // regexp to look out for references to other nids
-    let nidReferenceRxp = new RegExp("(?:[^\\d]|^)(\\d{6,})(?:[^\\d]|$)");
+    let nidReferenceRxp = new RegExp("(?:[^\\d]|^)(\\d{6,})(?:[^\\d]|$)", 'g');
 
     // count the occurences of each tag
     for (var i = 0; i < notes.length; i++) {
-        allNids.add(notes[i][0]);
+        let nid = notes[i][0];
+        allNids.add(nid);
         let tags = notes[i][1];
         let flds = notes[i][2];
 
         // check fields for refs to other notes
         for (let fld of flds) {
-            let match = nidReferenceRxp.exec(fld);
-            if (match && match.length) {
-                refs[notes[i][0]] = Number(match[1]);
-            }
+            let match;
+            do {
+                match = nidReferenceRxp.exec(fld);
+                if (match && match.length) {
+                    if (!(nid in refs)) {
+                        refs[nid] = [];
+                    }
+                    let reffedNid = Number(match[1]);
+                    if (!refs[nid].includes(reffedNid)) {
+                        refs[nid].push(reffedNid);
+                    }
+                }
+            } while (match);
         }
         for (let t of tags) {
             if (!(t in tagCounts)) {
@@ -102,7 +112,7 @@ export default function getGraphData(notes, retentions, settings) {
                         target: "n_" + n1,
                     },
                 });
-                if (!nodesWithEdges.has('n_'+ n1)) {
+                if (!nodesWithEdges.has('n_' + n1)) {
                     nodesWithEdges.add('n_' + n1);
                 }
             }
@@ -111,23 +121,25 @@ export default function getGraphData(notes, retentions, settings) {
 
         // create edges between notes with explicit linkings
         let explicitLinkingsCounter = 0;
-        for (let [nid, reffedNid] of Object.entries(refs)) {
-            if (allNids.has(reffedNid) && nid !== reffedNid) {
-                explicitLinkingsCounter++;
-                idC++;
-                edges.push({
-                    group: "edges",
-                    data: {
-                        id: "e_" + idC,
-                        source: 'n_' + nid,
-                        target: "n_" + reffedNid,
-                    },
-                });
-                if (!nodesWithEdges.has('n_'+ nid)) {
-                    nodesWithEdges.add('n_' + nid);
-                }
-                if (!nodesWithEdges.has('n_'+ reffedNid)) {
-                    nodesWithEdges.add('n_' + reffedNid);
+        for (let [nid, reffedNids] of Object.entries(refs)) {
+            for (let reffedNid of reffedNids) {
+                if (allNids.has(reffedNid) && nid !== reffedNid) {
+                    explicitLinkingsCounter++;
+                    idC++;
+                    edges.push({
+                        group: "edges",
+                        data: {
+                            id: "e_" + idC,
+                            source: 'n_' + nid,
+                            target: "n_" + reffedNid,
+                        },
+                    });
+                    if (!nodesWithEdges.has('n_' + nid)) {
+                        nodesWithEdges.add('n_' + nid);
+                    }
+                    if (!nodesWithEdges.has('n_' + reffedNid)) {
+                        nodesWithEdges.add('n_' + reffedNid);
+                    }
                 }
             }
         }
@@ -141,8 +153,8 @@ export default function getGraphData(notes, retentions, settings) {
                 group: "nodes",
             };
             nodes.push(tnode);
-                let c = 0;
-                let sum = 0.0;
+            let c = 0;
+            let sum = 0.0;
             for (let nid of els) {
                 if (nid in retentions) {
                     c++;
@@ -173,8 +185,8 @@ export default function getGraphData(notes, retentions, settings) {
                         if (!nodesWithEdges.has(tnode.data.id)) {
                             nodesWithEdges.add(tnode.data.id);
                         }
-                        if (!nodesWithEdges.has('t_'+ tag1.hashCode())) {
-                            nodesWithEdges.add('t_'+ tag1.hashCode());
+                        if (!nodesWithEdges.has('t_' + tag1.hashCode())) {
+                            nodesWithEdges.add('t_' + tag1.hashCode());
                         }
 
                         break;
