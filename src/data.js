@@ -21,8 +21,26 @@ export default function getGraphData(notes, retentions, settings) {
     let tagCounts = {};
     let edges = [];
     let nodes = [];
+
+    let allNids = new Set();
+    let refs = {};
+
+    // regexp to look out for references to other nids
+    let nidReferenceRxp = new RegExp("(?:[^\\d]|^)(\\d{6,})(?:[^\\d]|$)");
+
+    // count the occurences of each tag
     for (var i = 0; i < notes.length; i++) {
+        allNids.add(notes[i][0]);
         let tags = notes[i][1];
+        let flds = notes[i][2];
+
+        // check fields for refs to other notes
+        for (let fld of flds) {
+            let match = nidReferenceRxp.exec(fld);
+            if (match && match.length) {
+                refs[notes[i][0]] = Number(match[1]);
+            }
+        }
         for (let t of tags) {
             if (!(t in tagCounts)) {
                 tagCounts[t] = 1;
@@ -32,6 +50,7 @@ export default function getGraphData(notes, retentions, settings) {
         }
     }
 
+    // group the notes by their tags
     for (var i = 0; i < notes.length; i++) {
         n = notes[i];
         let tags = n[1];
@@ -89,6 +108,30 @@ export default function getGraphData(notes, retentions, settings) {
             }
             nodes.push(tnode);
         }
+
+        // create edges between notes with explicit linkings
+        let explicitLinkingsCounter = 0;
+        for (let [nid, reffedNid] of Object.entries(refs)) {
+            if (allNids.has(reffedNid)) {
+                explicitLinkingsCounter++;
+                idC++;
+                edges.push({
+                    group: "edges",
+                    data: {
+                        id: "e_" + idC,
+                        source: 'n_' + nid,
+                        target: "n_" + reffedNid,
+                    },
+                });
+                if (!nodesWithEdges.has('n_'+ nid)) {
+                    nodesWithEdges.add('n_' + nid);
+                }
+                if (!nodesWithEdges.has('n_'+ reffedNid)) {
+                    nodesWithEdges.add('n_' + reffedNid);
+                }
+            }
+        }
+        console.log(`[graph] Created ${explicitLinkingsCounter} explicit linking(s).`);
 
     } else if (settings.graphMode === 'tags') {
         let edgesCreated = new Set();
