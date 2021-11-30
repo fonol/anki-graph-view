@@ -64,6 +64,7 @@ class MainDialog(QDialog):
                 <link rel='stylesheet' type='text/css' href='{base_url}public/build/bundle.css' />
                 <style>body {{ color: lightgrey; font-family: 'Open Sans' }}</style>
                 {self.web.bundledScript("webview.js")}
+                <link rel='stylesheet' type='text/css' href='{base_url}public/lib/open-sans.css' />
                 <script src='qrc:///qtwebchannel/qwebchannel.js'></script>
                 <script src='{base_url}public/lib/cytoscape.min.js'></script>
                 <script src="{base_url}public/lib/layout-base.js"></script>

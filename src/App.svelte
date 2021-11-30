@@ -352,7 +352,7 @@ Valid inputs range from 50 to 1000 (default 300)."
 <style>
 	.outer {
 		color: lightgrey;
-		font-family: Verdana, "Roboto Mono";
+		font-family: "Open Sans";
 		width: 100%;
 		height: 100%;
 		overflow: hidden;
@@ -458,4 +458,6 @@ Valid inputs range from 50 to 1000 (default 300)."
 		flex-direction: column;
 		align-items: center;
 	}
+
+	
 </style>

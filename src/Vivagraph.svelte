@@ -79,9 +79,9 @@ import getGraphData from './data.js';
         loader.show = true;
         rendering = true;
 
-        loader.text = `<div>Rendering Graph</div>
-            <div style='font-size: 20px'>Lib: ${settings.mode}</div>
-            <div style='font-size: 20px'>Mode: ${settings.graphMode}</div>
+        loader.text = `<div style="margin-bottom: 5px">Rendering Graph ...</div>
+            <div style='font-size: 18px; opacity: 0.7'>Lib: ${settings.mode}</div>
+            <div style='font-size: 18px; opacity: 0.7'>Mode: ${settings.graphMode}</div>
             `;
         setTimeout(function () {
 
@@ -462,6 +462,6 @@ import getGraphData from './data.js';
 		text-overflow: ellipsis;
 		max-width: 200px;
 		overflow: hidden;
-        font-family: Verdana, "Roboto Mono";
+        font-family: "Open Sans";
 	}
 </style>
