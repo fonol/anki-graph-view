@@ -82,7 +82,8 @@ class MainDialog(QDialog):
                         backgroundColor: '{config["colors.background"]}',
                         showUnlinkedNodes: {str(config["showUnlinkedNodes"]).lower()},
                         mode: '{config["mode"].lower()}',
-                        graphMode: '{config["graphMode"].lower()}'
+                        graphMode: '{config["graphMode"].lower()}',
+                        excludeTags: {json.dumps(config["settings.excludeTags"])}
                     }};
                 </script>
             </head>  

@@ -7,5 +7,6 @@
     "colors.background": "#333333",
     "showUnlinkedNodes": true,
     "mode": "cytoscape",
-    "graphMode": "default"
+    "graphMode": "default", 
+    "settings.excludeTags": []
 }

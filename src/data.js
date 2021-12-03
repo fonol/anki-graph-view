@@ -16,8 +16,6 @@ export default function getGraphData(notes, retentions, settings) {
     };
 
     let byTag = {};
-    let n;
-
     let tagCounts = {};
     let edges = [];
     let nodes = [];
@@ -62,10 +60,7 @@ export default function getGraphData(notes, retentions, settings) {
 
     // group the notes by their tags
     for (var i = 0; i < notes.length; i++) {
-        n = notes[i];
-        let tags = n[1];
-        let lbl = n[3];
-        let nid = n[0];
+        let [nid, tags, _, lbl] = notes[i];
         if (tags.length) {
             for (let t of tags) {
                 if (!(t in byTag)) {
@@ -91,6 +86,10 @@ export default function getGraphData(notes, retentions, settings) {
         for (let [tag, els] of Object.entries(byTag)) {
             if (els.length > settings.tagBoundary) {
                 console.log("[Graph] Skipping linking between nodes with tag " + tag + " because it has >" + settings.tagBoundary + " notes (" + els.length + ")");
+                continue;
+            } 
+            if (settings.excludeTags && settings.excludeTags.includes(tag)) {
+                console.log("[Graph] Skipping linking between nodes with tag " + tag + " because it is excluded in the config.");
                 continue;
             }
 
@@ -148,6 +147,9 @@ export default function getGraphData(notes, retentions, settings) {
     } else if (settings.graphMode === 'tags') {
         let edgesCreated = new Set();
         for (let [tag, els] of Object.entries(byTag)) {
+            if (settings.excludeTags && settings.excludeTags.includes(tag)) {
+                continue;
+            }
             let tnode = {
                 data: { id: "t_" + tag.hashCode(), label: tag, ret: null },
                 group: "nodes",
@@ -167,6 +169,10 @@ export default function getGraphData(notes, retentions, settings) {
                 if (tag1 === tag) {
                     continue;
                 }
+                if (settings.excludeTags && settings.excludeTags.includes(tag1)) {
+                    continue;
+                }
+
                 if (edgesCreated.has(tag + ' ' + tag1) || edgesCreated.has(tag1 + ' ' + tag)) {
                     continue;
                 }

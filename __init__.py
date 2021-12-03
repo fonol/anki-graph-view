@@ -15,7 +15,6 @@ def addon_id() -> str:
     return dir[dir.rfind("/")+1:]
 
 def init_addon():
-
     gui_hooks.top_toolbar_did_init_links.append(on_toolbar_init)
     mw.addonManager.setWebExports(addon_id(), ".*\\.(js|css|map|png|jpe?g|gif|svg|ttf|woff2?)$")
     
