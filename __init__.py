@@ -20,7 +20,7 @@ def init_addon():
     
 def on_toolbar_init(links: List[str], top_toolbar: aqt.toolbar.Toolbar):
     lnk = top_toolbar.create_link("","Graph", open_main_window)
-    links.append(lnk)
+    links.insert(len(links)-1, lnk)
 
 def open_main_window():
     dialog = MainDialog(aqt.mw.app.activeWindow())
