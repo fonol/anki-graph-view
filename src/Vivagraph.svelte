@@ -7,6 +7,7 @@ import getGraphData from './data.js';
     export let notes;
     export let retentions;
     export let settings;
+    export let searchResults;
 
     export let infoNid;
 
@@ -82,7 +83,7 @@ import getGraphData from './data.js';
         setTimeout(function () {
 
             let pBuildNodes = performance.now();
-            let { nodes, edges } = getGraphData(notes, retentions, settings);
+            let { nodes, edges } = getGraphData(notes, retentions, settings, searchResults);
            
             console.log('Built ' + nodes.length + ' nodes, ' + edges.length + ' edges.');
             console.log('Build nodes: ' + (performance.now() - pBuildNodes) + ' ms');

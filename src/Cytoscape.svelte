@@ -6,6 +6,7 @@
     export let notes;
     export let retentions;
     export let settings;
+    export let searchResults;
 
     export let infoNid;
 
@@ -116,7 +117,8 @@
             let { nodes, edges } = getGraphData(
                 notes,
                 retentions,
-                settingsCopy
+                settingsCopy,
+                searchResults
             );
 
             console.log(

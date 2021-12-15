@@ -1,4 +1,5 @@
-export default function getGraphData(notes, retentions, settings) {
+export default function getGraphData(notes, retentions, settings, searchResults) {
+
     console.log('getGraphData()');
     console.assert(settings != null);
     console.assert(notes != null && notes.length);
@@ -67,15 +68,19 @@ export default function getGraphData(notes, retentions, settings) {
                 if (!(t in byTag)) {
                     byTag[t] = [];
                 }
-                byTag[t].push(nid);
+                if (!searchResults.length || searchResults.includes(nid)) {
+                    byTag[t].push(nid);
+                }
             }
         }
         if (settings.graphMode === 'default' || settings.graphMode === 'scoring') {
-            let ret = settings.showRetentions ? retentions[Number(nid)] || null : null;
-            nodes.push({
-                data: { id: "n_" + nid, label: lbl, ret: ret },
-                group: "nodes",
-            });
+            if (!searchResults.length || searchResults.includes(nid)) {
+                let ret = settings.showRetentions ? retentions[Number(nid)] || null : null;
+                nodes.push({
+                    data: { id: "n_" + nid, label: lbl, ret: ret },
+                    group: "nodes",
+                });
+            }
         }
     }
 
@@ -85,6 +90,9 @@ export default function getGraphData(notes, retentions, settings) {
     if (settings.graphMode === 'default') {
 
         for (let [tag, els] of Object.entries(byTag)) {
+            if (els.length === 0) {
+                continue;
+            }
             if (els.length > settings.tagBoundary) {
                 console.log("[Graph] Skipping linking between nodes with tag " + tag + " because it has >" + settings.tagBoundary + " notes (" + els.length + ")");
                 continue;
@@ -123,7 +131,7 @@ export default function getGraphData(notes, retentions, settings) {
         let explicitLinkingsCounter = 0;
         for (let [nid, reffedNids] of Object.entries(refs)) {
             for (let reffedNid of reffedNids) {
-                if (allNids.has(reffedNid) && nid !== reffedNid) {
+                if (allNids.has(reffedNid) && nid !== reffedNid && (!searchResults.length || (searchResults.includes(nid) && searchResults.includes(reffedNid)))) {
                     explicitLinkingsCounter++;
                     idC++;
                     edges.push({
@@ -220,6 +228,9 @@ export default function getGraphData(notes, retentions, settings) {
                 if (notes[i1][0] === notes[i0][0] || i1 <= i0) {
                     continue;
                 }
+                if (searchResults.length && (!searchResults.includes(notes[i1][0]) || !searchResults.includes(notes[i0][0]))) {
+                    continue;
+                }
                 let [nid1, tags1, flds1, _, dids1] = notes[i1];
                 let score = 0;
                 c++;
@@ -227,7 +238,6 @@ export default function getGraphData(notes, retentions, settings) {
                 //
                 // collect points
                 //
-                // console.log(Math.abs(nid0 - nid1) / 1000);
 
                 // +5 points if creation date within 30 seconds 
                 if (Math.abs(nid0 - nid1) / 1000 <= 30) {

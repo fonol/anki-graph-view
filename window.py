@@ -156,13 +156,32 @@ class MainDialog(QDialog):
             mw.addonManager.writeConfig(__name__, config)
 
         elif cmd.startswith("open-in-browser "):
+
             browser = aqt.dialogs.open("Browser", mw)
             browser.form.searchEdit.lineEdit().setText(f"nid:{cmd.split()[1]}")
             browser.onSearchActivated()
 
+        elif cmd.startswith("fetch "):
+
+            key = cmd.split(" ")[1]
+            res = " ".join(cmd.split(" ")[2:])
+            r   = self.handle_fetch(res)
+
+            self.js(f"window._fetchWaiting['{key}']({json.dumps(r)}); delete window._fetchWaiting['{key}'];")
 
         else:
             print("[Graph] Warning, unhandled cmd: " + cmd)
+
+    def handle_fetch(self, res: str):
+
+        if res is None:
+            raise ValueError("resource must not be empty")
+
+        if res.startswith("search "):
+            search_query = " ".join(res.split(" ")[1:])
+            return list(mw.col.find_notes(search_query))
+
+        return None
 
 
   

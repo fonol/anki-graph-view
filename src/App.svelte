@@ -4,12 +4,15 @@
 	import Vivagraph from "./Vivagraph.svelte";
 	import Cytoscape from "./Cytoscape.svelte";
 
+	
 	let settings = window.settings;
 	let notes = window.notes;
 	let retentions = window.retentions;
 
-	let graph;
+	let search = '';
+	let searchResults = [];
 
+	let graph;
 	let infoNid;
 	let tagBoundaryInp = settings.tagBoundary;
 	let iterInp = settings.iterations;
@@ -57,7 +60,7 @@
 				pycmd("config-graph-mode " + settings.graphMode);
 			renderGraph();
 		})();
-	// $: settings.mode && renderGraph();
+
 
 	onMount(renderWhenReady);
 
@@ -70,6 +73,32 @@
 		}
 		notes = window.notes;
 		renderGraph();
+	}
+
+	function triggerSearch() {
+		if (search && search.trim().length) {
+				fetch('search '  + search).then(function(nids) {
+					searchResults = nids || [];
+					if (!searchResults.length) {
+						showNotification('Search found no results.');
+					}
+					renderGraph();
+				});
+
+			} else {
+				if (searchResults.length) {
+					searchResults = [];
+					renderGraph();
+				} else {
+					searchResults = [];
+				}
+			}
+	}
+
+	function onSearchKeypress(e) {
+		if (e && e.keyCode === 13) {
+			triggerSearch();
+		} 
 	}
 
 	function tagBoundaryChange() {
@@ -120,6 +149,37 @@
 		);
 	}
 
+	function fetch(resource) {
+		let key  = Date.now()+ '-' + resource.split("").reduce(function(a,b){a=((a<<5)-a)+b.charCodeAt(0);return a&a},0);
+
+		if (typeof(window._fetchWaiting) === 'undefined') {
+			window._fetchWaiting = {};
+		}
+        let promise = new Promise(function(resolve) {
+            window._fetchWaiting[key] = resolve;
+        });
+		pycmd(`fetch ${key} ${resource}`);
+        return promise;
+	}
+
+	function showNotification(text) {
+		if (document.getElementById('notification')) {
+			document.getElementById('notification').remove();
+		}
+
+		let notification = document.createElement('div');
+		notification.innerText = text;
+		notification.classList.add('notification');
+		notification.onclick = 'event.target.remove()';
+		notification.id = 'notification';
+		document.body.appendChild(notification);
+		setTimeout(function() {
+			if (document.getElementById('notification')) {
+				document.getElementById('notification').remove();
+			}
+		}, 2000);
+	}
+
 	async function renderGraph() {
 		await tick();
 		if (graph) {
@@ -130,129 +190,107 @@
 
 <div class="outer" style="background: {settings.backgroundColor}">
 	<div id="controls">
-		<div style="margin-right: 10px">
-			<select bind:value={settings.mode}>
-				<option value="cytoscape">Cytoscape</option>
-				<option value="viva" disabled="{!webGLAvailable}">Viva</option>
-			</select>
-		</div>
-		<div style="margin-right: 10px">
-			<select bind:value={settings.graphMode}>
-				<option value="default">Default</option>
-				<option value="tags">Tags Only</option>
-				<option value="scoring">Scoring</option>
-			</select>
-		</div>
-		<div
-			class="button button-icon"
-			title="Rerender Graph"
-			style="margin-right: 10px"
-			on:click={renderGraph}
-		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				class="ionicon"
-				viewBox="0 0 512 512"
-				><path
-					d="M288 193s12.18-6-32-6a80 80 0 1080 80"
-					fill="none"
-					stroke="currentColor"
-					stroke-linecap="round"
-					stroke-miterlimit="10"
-					stroke-width="28"
-				/><path
-					fill="none"
-					stroke="currentColor"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="28"
-					d="M256 149l40 40-40 40"
-				/><path
-					d="M256 64C150 64 64 150 64 256s86 192 192 192 192-86 192-192S362 64 256 64z"
-					fill="none"
-					stroke="currentColor"
-					stroke-miterlimit="10"
-					stroke-width="32"
-				/></svg
-			>
-		</div>
-		<div
-			class="button button-icon"
-			title="Toggle Show Retentions"
-			style="margin-right: 10px"
-			on:click={toggleShowRetentions}
-			class:active={settings.showRetentions}
-		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				class="ionicon"
-				viewBox="0 0 512 512"
-				><rect
-					x="64"
-					y="320"
-					width="48"
-					height="160"
-					rx="8"
-					ry="8"
-					fill="none"
-					stroke="currentColor"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="32"
-				/><rect
-					x="288"
-					y="224"
-					width="48"
-					height="256"
-					rx="8"
-					ry="8"
-					fill="none"
-					stroke="currentColor"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="32"
-				/><rect
-					x="400"
-					y="112"
-					width="48"
-					height="368"
-					rx="8"
-					ry="8"
-					fill="none"
-					stroke="currentColor"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="32"
-				/><rect
-					x="176"
-					y="32"
-					width="48"
-					height="448"
-					rx="8"
-					ry="8"
-					fill="none"
-					stroke="currentColor"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="32"
-				/></svg
-			>
-		</div>
-		{#if settings.mode !== "cytoscape"}
+		<div>
+			<div style="margin-right: 10px">
+				<select bind:value={settings.mode}>
+					<option value="cytoscape">Cytoscape</option>
+					<option value="viva" disabled="{!webGLAvailable}">Viva</option>
+				</select>
+			</div>
+			<div style="margin-right: 10px">
+				<select bind:value={settings.graphMode}>
+					<option value="default">Default</option>
+					<option value="tags">Tags Only</option>
+					<option value="scoring">Scoring</option>
+				</select>
+			</div>
 			<div
 				class="button button-icon"
-				title="Toggle Show Unlinked Nodes"
-				on:click={toggleShowUnlinkedNodes}
-				class:active={settings.showUnlinkedNodes}
+				title="Rerender Graph"
+				style="margin-right: 10px"
+				on:click={renderGraph}
 			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					class="ionicon"
 					viewBox="0 0 512 512"
-					><circle
-						cx="256"
-						cy="256"
-						r="192"
+					><path
+						d="M288 193s12.18-6-32-6a80 80 0 1080 80"
+						fill="none"
+						stroke="currentColor"
+						stroke-linecap="round"
+						stroke-miterlimit="10"
+						stroke-width="28"
+					/><path
+						fill="none"
+						stroke="currentColor"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="28"
+						d="M256 149l40 40-40 40"
+					/><path
+						d="M256 64C150 64 64 150 64 256s86 192 192 192 192-86 192-192S362 64 256 64z"
+						fill="none"
+						stroke="currentColor"
+						stroke-miterlimit="10"
+						stroke-width="32"
+					/></svg
+				>
+			</div>
+			<div
+				class="button button-icon"
+				title="Toggle Show Retentions"
+				style="margin-right: 10px"
+				on:click={toggleShowRetentions}
+				class:active={settings.showRetentions}
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="ionicon"
+					viewBox="0 0 512 512"
+					><rect
+						x="64"
+						y="320"
+						width="48"
+						height="160"
+						rx="8"
+						ry="8"
+						fill="none"
+						stroke="currentColor"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="32"
+					/><rect
+						x="288"
+						y="224"
+						width="48"
+						height="256"
+						rx="8"
+						ry="8"
+						fill="none"
+						stroke="currentColor"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="32"
+					/><rect
+						x="400"
+						y="112"
+						width="48"
+						height="368"
+						rx="8"
+						ry="8"
+						fill="none"
+						stroke="currentColor"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="32"
+					/><rect
+						x="176"
+						y="32"
+						width="48"
+						height="448"
+						rx="8"
+						ry="8"
 						fill="none"
 						stroke="currentColor"
 						stroke-linecap="round"
@@ -261,59 +299,93 @@
 					/></svg
 				>
 			</div>
-		{/if}
-		<div class="setting-item">
-			<div
-				class="label"
-				title="Only include tags that are less common than this value. 
-Valid values range from 50 to 1000 (default 200)."
-			>
-				Tag Boundary
-			</div>
-			<input
-				type="number"
-				bind:value={tagBoundaryInp}
-				on:blur={() => {
-					tagBoundaryInp = Math.max(
-						50,
-						Math.min(1000, tagBoundaryInp)
-					);
-				}}
-				min="50"
-				max="1000"
-			/>
-		</div>
-		{#if settings.mode === "viva"}
+			{#if settings.mode !== "cytoscape"}
+				<div
+					class="button button-icon"
+					title="Toggle Show Unlinked Nodes"
+					on:click={toggleShowUnlinkedNodes}
+					class:active={settings.showUnlinkedNodes}
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="ionicon"
+						viewBox="0 0 512 512"
+						><circle
+							cx="256"
+							cy="256"
+							r="192"
+							fill="none"
+							stroke="currentColor"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="32"
+						/></svg
+					>
+				</div>
+			{/if}
 			<div class="setting-item">
 				<div
 					class="label"
-					title="How many steps the layouting algorithm should perform until the graph freezes. 
-Valid inputs range from 50 to 1000 (default 300)."
+					title="Only include tags that are less common than this value. 
+	Valid values range from 50 to 1000 (default 200)."
 				>
-					Layouting Iterations
+					Tag Boundary
 				</div>
 				<input
 					type="number"
-					bind:value={iterInp}
+					bind:value={tagBoundaryInp}
 					on:blur={() => {
-						iterInp = Math.max(50, Math.min(1000, iterInp));
+						tagBoundaryInp = Math.max(
+							50,
+							Math.min(1000, tagBoundaryInp)
+						);
 					}}
 					min="50"
 					max="1000"
 				/>
 			</div>
-		{/if}
-		<div class="setting-item">
-			<div class="label" title="Default = #999999">Default Node</div>
-			<input type="color" bind:value={settings.defaultNodeColor} />
+			{#if settings.mode === "viva"}
+				<div class="setting-item">
+					<div
+						class="label"
+						title="How many steps the layouting algorithm should perform until the graph freezes. 
+	Valid inputs range from 50 to 1000 (default 300)."
+					>
+						Layouting Iterations
+					</div>
+					<input
+						type="number"
+						bind:value={iterInp}
+						on:blur={() => {
+							iterInp = Math.max(50, Math.min(1000, iterInp));
+						}}
+						min="50"
+						max="1000"
+					/>
+				</div>
+			{/if}
+			<div class="setting-item">
+				<div class="label" title="Default = #999999">Default Node</div>
+				<input type="color" bind:value={settings.defaultNodeColor} />
+			</div>
+			<div class="setting-item">
+				<div class="label" title="Default = #555555">Edge</div>
+				<input type="color" bind:value={settings.edgeColor} />
+			</div>
+			<div class="setting-item">
+				<div class="label" title="Default = #333333">Background</div>
+				<input type="color" bind:value={settings.backgroundColor} />
+			</div>
 		</div>
-		<div class="setting-item">
-			<div class="label" title="Default = #555555">Edge</div>
-			<input type="color" bind:value={settings.edgeColor} />
-		</div>
-		<div class="setting-item">
-			<div class="label" title="Default = #333333">Background</div>
-			<input type="color" bind:value={settings.backgroundColor} />
+		<div>
+			<input type="text" class="browser-search" placeholder="Browser search" bind:value={search} on:keypress={onSearchKeypress}/>
+			<div
+				class="button button-icon"
+				style="margin-left: 10px"
+				on:click={triggerSearch}
+			>
+				<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512"><path d="M221.09 64a157.09 157.09 0 10157.09 157.09A157.1 157.1 0 00221.09 64z" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="32"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="32" d="M338.29 338.29L448 448"/></svg>
+			</div>
 		</div>
 	</div>
 
@@ -325,6 +397,7 @@ Valid inputs range from 50 to 1000 (default 300)."
 				{retentions}
 				{notes}
 				{settings}
+				{searchResults}
 			/>
 		{:else}
 			<Cytoscape
@@ -333,6 +406,7 @@ Valid inputs range from 50 to 1000 (default 300)."
 				{retentions}
 				{notes}
 				{settings}
+				{searchResults}
 			/>
 		{/if}
 		<div id="info">
@@ -383,7 +457,13 @@ Valid inputs range from 50 to 1000 (default 300)."
 		display: flex;
 		flex-direction: row;
 		align-items: center;
+		justify-content: space-between;
 		background: #232323;
+	}
+	#controls > div {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
 	}
 
 	#info {
@@ -447,6 +527,7 @@ Valid inputs range from 50 to 1000 (default 300)."
 		background: #2b2b2b;
 		width: 20px;
 		height: 20px;
+		cursor: pointer;
 	}
 	.button-icon.active {
 		color: #0094cd;
@@ -479,6 +560,11 @@ Valid inputs range from 50 to 1000 (default 300)."
 		outline: none !important;
 		border: 1px solid #0094cd;
 		box-shadow: 0 0 10px #313131;
+	}
+	input.browser-search {
+		padding: 3px 5px;
+		font-size: 18px;
+		width: 360px;
 	}
 	.setting-item {
 		margin-left: 10px;
@@ -518,6 +604,17 @@ Valid inputs range from 50 to 1000 (default 300)."
 
 		animation: pulsate 1.5s ease-out;
 		animation-iteration-count: infinite;
+	}
+	:global(.notification) {
+		position: absolute;
+		bottom: 30px;
+		right: 30px;
+		padding: 15px;
+		font-size: 15px;
+		background: #2b2b2b;
+		color: lightgrey;
+		cursor: pointer;
+		z-index: 999999;
 	}
 
 	
