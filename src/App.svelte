@@ -140,6 +140,7 @@
 			<select bind:value={settings.graphMode}>
 				<option value="default">Default</option>
 				<option value="tags">Tags Only</option>
+				<option value="scoring">Scoring</option>
 			</select>
 		</div>
 		<div
@@ -335,16 +336,23 @@ Valid inputs range from 50 to 1000 (default 300)."
 			/>
 		{/if}
 		<div id="info">
-			<div id="info-tags">
-				{#each noteTags as t}
-					<div class="tag">{t}</div>
-				{/each}
-			</div>
-			<div id="info-fields">
-				{#each noteFields as f}
-					<div class="field">{@html f}</div>
-				{/each}
-			</div>
+			{#if infoNid && noteFields && noteFields.length}
+				<div style="flex: 1 1 auto; overflow-y: auto;">
+					<div>
+						{#each noteTags as t}
+							<div class="tag">{t}</div>
+						{/each}
+					</div>
+					<div id="info-fields">
+						{#each noteFields as f}
+							<div class="field">{@html f}</div>
+						{/each}
+					</div>
+				</div>
+				<div id="info-actions">
+					<button on:click={window.pycmd('open-in-browser ' + infoNid)}>Open in Browser</button>
+				</div>
+			{/if}
 		</div>
 	</div>
 </div>
@@ -367,6 +375,7 @@ Valid inputs range from 50 to 1000 (default 300)."
 		display: flex;
 		flex-direction: row;
 		height: 100%;
+		overflow: hidden;
 	}
 
 	#controls {
@@ -380,18 +389,25 @@ Valid inputs range from 50 to 1000 (default 300)."
 	#info {
 		width: 400px;
 		flex: 0 0 400px;
-		overflow: auto;
+		overflow: hidden;
 		padding: 10px;
 		margin-left: 10px;
 		background: #232323;
+		display: flex;
+		flex-direction: column;
+		align-content: space-between;
+	}
+	#info-actions {
+		padding: 10px;
+		background: #191919;
 	}
 	.tag {
 		display: inline-flex;
 		margin: 0 5px 5px 0;
-		border: 1px solid #3a3a3a;
+		border: 1px solid #444;
 		padding: 2px 7px;
 		align-items: center;
-		background: #2b2b2b;
+		background: #3b3b3b;
 		justify-content: center;
 		border-radius: 4px;
 		font-size: 13px;
@@ -410,6 +426,18 @@ Valid inputs range from 50 to 1000 (default 300)."
 		word-wrap: break-word;
 	}
 
+	button {
+		padding: 3px;
+		border: 1px solid #3a3a3a;
+		border-radius: 2px;
+		background: #2b2b2b;
+		color: #9a9a9a;
+		cursor: pointer;
+	}
+	button:hover {
+		color: rgb(221, 221, 221);
+		border: 1px solid #464646;
+	}
 	.button-icon {
 		display: flex;
 		align-items: center;
@@ -457,6 +485,39 @@ Valid inputs range from 50 to 1000 (default 300)."
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+	}
+	:global(*::-webkit-scrollbar) {
+		width: 10px !important;
+		background: #313d45 !important;
+		border-radius: 4px !important;
+	}
+ 	:global(*::-webkit-scrollbar-thumb) {
+		background: #515d71 !important;
+		border-radius: 4px !important;
+	} 
+	@keyframes -global-pulsate {
+		0% {
+		transform: scale(.1);
+		opacity: 0.0;
+		}
+		50% {
+		opacity: 1;
+		}
+		100% {
+		transform: scale(1.2);
+		opacity: 0;
+		}
+	}
+	:global(.loader) {
+		border: 5px solid #2496dc;
+		border-radius: 30px;
+		height: 30px;
+		opacity: 0;
+		width: 30px; 
+		display: inline-block;
+
+		animation: pulsate 1.5s ease-out;
+		animation-iteration-count: infinite;
 	}
 
 	

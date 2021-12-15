@@ -15,13 +15,10 @@
     let rendering = false;
     let loader = {
         show: false,
-        text: "Building graph layout...",
+        text: "",
     };
 
     onMount(function () {
-        // document.onmousemove = function (e) {
-        //     window.lastMouseMove = [e.pageX, e.pageY];
-        // };
     });
     onDestroy(function () {
         window.removeEventListener("resize", onResize);
@@ -106,10 +103,7 @@
         }
         loader.show = true;
         rendering = true;
-        loader.text = `<div style="margin-bottom: 5px">Rendering Graph ...</div>
-            <div style='font-size: 18px; opacity: 0.7'>Lib: ${settings.mode}</div>
-            <div style='font-size: 18px; opacity: 0.7'>Mode: ${settings.graphMode}</div>
-            `;
+   
         await tick();
         setTimeout(function () {
             console.log("renderGraph()");
@@ -170,9 +164,6 @@
                             width: "2px",
 
                             "line-color": settings.edgeColor,
-                            // 'target-arrow-color': '#ccc',
-                            // 'target-arrow-shape': 'triangle',
-                            // 'curve-style': 'bezier'
                         },
                     },
                 ],
@@ -301,7 +292,9 @@
 <div style="height: 100%; flex: 1 1 auto; display: flex;">
     {#if loader.show}
         <div class="overlay">
-            {@html loader.text}
+                <div class='loader' style='margin-left: auto; margin-right: auto;'></div><br/>
+                <div style="margin-bottom: 5px">Building Graph ...</div>
+                <div style='font-size: 18px; opacity: 0.7'>[Lib: {settings.mode}, Mode: {settings.graphMode}]</div>
         </div>
     {/if}
     <div id="cytoscape-container" />

@@ -79,10 +79,6 @@ import getGraphData from './data.js';
         loader.show = true;
         rendering = true;
 
-        loader.text = `<div style="margin-bottom: 5px">Rendering Graph ...</div>
-            <div style='font-size: 18px; opacity: 0.7'>Lib: ${settings.mode}</div>
-            <div style='font-size: 18px; opacity: 0.7'>Mode: ${settings.graphMode}</div>
-            `;
         setTimeout(function () {
 
             let pBuildNodes = performance.now();
@@ -422,7 +418,9 @@ import getGraphData from './data.js';
 <div style="height: 100%; flex: 1 1 auto; display: flex;">
     {#if loader.show}
         <div class="overlay">
-            {@html loader.text}
+            <div class='loader' style='margin-left: auto; margin-right: auto;'></div><br/>
+            <div style="margin-bottom: 5px">Building Graph ...</div>
+            <div style='font-size: 18px; opacity: 0.7'>[Lib: {settings.mode}, Mode: {settings.graphMode}]</div>
         </div>
     {/if}
     <div id="cytoscape-container" />

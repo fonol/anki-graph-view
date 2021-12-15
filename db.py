@@ -42,8 +42,15 @@ def get_all_notes_with_tags() -> List[Tuple[Any,...]]:
     Fetch all notes from Anki's db.
     """
 
-    res = mw.col.db.all("select id, tags, flds, sfld from notes")
-    return [(r[0], tags(r[1]), fields(r[2]), label(r[2], r[3])) for r in res]
+    notes       = mw.col.db.all("select id, tags, flds, sfld from notes")
+    dids_nids   = mw.col.db.all("select distinct nid, did from cards")
+    nid_did_dct = {}
+    for nid, did in dids_nids:
+        if not nid in nid_did_dct:
+            nid_did_dct[nid] = []
+        nid_did_dct[nid].append(did)
+
+    return [(r[0], tags(r[1]), fields(r[2]), label(r[2], r[3]), nid_did_dct.get(r[0], [])) for r in notes]
 
 
 
@@ -75,7 +82,6 @@ def get_retentions() -> Dict[int, float]:
             if nid not in rpassed:
                 rpassed[nid] = 0
             rpassed[nid] = rpassed[nid] + 1
-
     res = {}
     for nid in nids:
         if nid in rpassed and nid in rfailed:

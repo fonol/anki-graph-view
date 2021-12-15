@@ -8,5 +8,6 @@
     "showUnlinkedNodes": true,
     "mode": "cytoscape",
     "graphMode": "default", 
+    "scoring.includeTopXPercent": 1,
     "settings.excludeTags": []
 }

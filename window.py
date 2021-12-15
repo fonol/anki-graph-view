@@ -83,7 +83,8 @@ class MainDialog(QDialog):
                         showUnlinkedNodes: {str(config["showUnlinkedNodes"]).lower()},
                         mode: '{config["mode"].lower()}',
                         graphMode: '{config["graphMode"].lower()}',
-                        excludeTags: {json.dumps(config["settings.excludeTags"])}
+                        excludeTags: {json.dumps(config["settings.excludeTags"])},
+                        scoringIncludeTopXPercent: {json.dumps(config["scoring.includeTopXPercent"])}
                     }};
                 </script>
             </head>  
@@ -153,6 +154,12 @@ class MainDialog(QDialog):
 
             config["showUnlinkedNodes"] = cmd.split(" ")[1].lower() == "true"
             mw.addonManager.writeConfig(__name__, config)
+
+        elif cmd.startswith("open-in-browser "):
+            browser = aqt.dialogs.open("Browser", mw)
+            browser.form.searchEdit.lineEdit().setText(f"nid:{cmd.split()[1]}")
+            browser.onSearchActivated()
+
 
         else:
             print("[Graph] Warning, unhandled cmd: " + cmd)

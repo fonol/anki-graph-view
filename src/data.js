@@ -58,6 +58,7 @@ export default function getGraphData(notes, retentions, settings) {
         }
     }
 
+
     // group the notes by their tags
     for (var i = 0; i < notes.length; i++) {
         let [nid, tags, _, lbl] = notes[i];
@@ -69,7 +70,7 @@ export default function getGraphData(notes, retentions, settings) {
                 byTag[t].push(nid);
             }
         }
-        if (settings.graphMode === 'default') {
+        if (settings.graphMode === 'default' || settings.graphMode === 'scoring') {
             let ret = settings.showRetentions ? retentions[Number(nid)] || null : null;
             nodes.push({
                 data: { id: "n_" + nid, label: lbl, ret: ret },
@@ -202,6 +203,156 @@ export default function getGraphData(notes, retentions, settings) {
 
             }
         }
+    } else if (settings.graphMode === 'scoring') {
+
+        let scores = [];
+
+        let start = performance.now();
+
+
+        let c = 0;
+        let tcl = 0; 
+        let dcl = 0;
+        
+        for (let i0 = 0; i0 < notes.length; i0++) {
+            let [nid0, tags0, flds0, _, dids0] = notes[i0];
+            for (let i1 = 0; i1 < notes.length; i1++) {
+                if (notes[i1][0] === notes[i0][0] || i1 <= i0) {
+                    continue;
+                }
+                let [nid1, tags1, flds1, _, dids1] = notes[i1];
+                let score = 0;
+                c++;
+
+                //
+                // collect points
+                //
+                // console.log(Math.abs(nid0 - nid1) / 1000);
+
+                // +5 points if creation date within 30 seconds 
+                if (Math.abs(nid0 - nid1) / 1000 <= 30) {
+                    score += 5;
+                    tcl++;
+                }  
+
+                // +4 points if creation date within 1 minute 
+                else if (Math.abs(nid0 - nid1) / 1000 <= 60) {
+                    score += 4;
+                    tcl++;
+                }  
+
+                // +3 points if creation date within 10 minutes
+                else if (Math.abs(nid0 - nid1) / 1000 <= 600) {
+                    score += 3;
+                    tcl++;
+                }
+
+                // +1 point if creation date within 1 hour
+                else if (Math.abs(nid0 - nid1) / 1000 <= 3600) {
+                    score += 1;
+                    tcl++;
+                } 
+
+                // +1 point if same deck
+                if (dids0.length && dids1.length && dids0.find(did0 => dids1.find(did1 => did1 === did0) != null)) {
+                    score += 1;
+                    dcl++;
+                }
+
+                for (let t0 of tags0 || []) {
+                    if (settings.excludeTags && settings.excludeTags.includes(t0)) {
+                        continue;
+                    }
+                    if (tags1.length && tags1.includes(t0) && t0 in tagCounts && tagCounts[t0] <= settings.tagBoundary) {
+
+                        if (tagCounts[t0] >= 100) {
+                            // +1 point for each tag in common that has 100-999 notes
+                            score += 1;
+                        } else if (tagCounts[t0] >= 50){
+                            // +2 points for each tag in common that has less than 100 notes
+                            score += 2;
+                        } else {
+                            // +3 points for each tag in common that has less than 50 notes
+                            score += 3;
+                        }
+                        // +1 points for each nested tag level
+                        score += 1 * (t0.split('::').length - 1);
+                    }
+                }
+
+                // // +0.5 points for each equal field
+                // for (let f0 of flds0 || []) {
+                //     for (let f1 of flds1 || []) {
+                //         if (f0.length && f1.length && f0 === f1) {
+                //             if (flds0.length < 5 && flds1.length < 5) {
+                //                 score += 0.5;
+                //             } else {
+                //                 score += 0.3;
+                //             }
+                //         } 
+                //     }
+                // }
+
+                if (score > 0) {
+                    scores.push([nid0, nid1, score]);
+                }
+
+            }
+        }
+    
+        console.log(`[Graph] Finished collecting scores, took ${Math.trunc(performance.now() - start)}ms`);
+        console.log(`[Graph] Creation Date proximity found for ${Math.trunc(tcl * 100.0 / c)}% of pairs`);
+        console.log(`[Graph] Same Deck found for ${Math.trunc(dcl * 100.0 / c)}% of pairs`);
+        console.log(`[Graph] ${scores.length} note pairs have a score > 0`);
+        let boundary = settings.scoringIncludeTopXPercent;
+        if (boundary < 1 || boundary > 100) {
+            alert("Invalid boundary for scoring: " + boundary);
+        }
+
+        if (scores.length) {
+            scores.sort(function (s1, s2) {
+                return s2[2] - s1[2];
+            });
+            console.log(`[Graph] Highest score is ${scores[0][2]}`);
+            console.log(`[Graph] Lowest score > 0 is ${scores[scores.length-1][2]}`);
+            
+            let topX = scores.slice(0, Math.trunc(scores.length * boundary / 100));
+            let minScore = topX[topX.length-1][2];
+            let res = [];
+            let c = 0;
+            let maxEdgeCount = 5000;
+            for (let s of scores) {
+                c++;
+                if (c > maxEdgeCount) {
+                    break;
+                }
+                if (s[2] >= minScore) {
+                    res.push(s);
+                }
+            }
+            console.log(`[Graph] Scoring, boundary is ${boundary}, took first ${res.length} edges out of ${scores.length}`);
+
+            for (let [nid0, nid1, _] of res) {
+
+                idC++;
+
+                edges.push({
+                    group: "edges",
+                    data: {
+                        id: "e_" + idC,
+                        source: "n_"+ nid0,
+                        target: "n_" + nid1,
+                    },
+                });
+                if (!nodesWithEdges.has('n_' + nid0)) {
+                    nodesWithEdges.add('n_' + nid0);
+                }
+                if (!nodesWithEdges.has('n_' + nid1)) {
+                    nodesWithEdges.add('n_' + nid1);
+                }
+            }
+        }
+
 
     } else {
         console.warn("[Graph] invalid graph mode: " + settings.graphMode);
